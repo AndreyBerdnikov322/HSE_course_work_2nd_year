@@ -1,0 +1,13 @@
+{% extends "questions/base.html" %}
+
+{% block content %}
+    <h1>Вопросы</h1>
+    {% for question in questions %}
+        <div class="question">
+            <p>{{ question.text }}</p>
+            {% if question.image %}
+                <img src="{{ question.image.url }}" alt="Изображение">
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endblock %}
