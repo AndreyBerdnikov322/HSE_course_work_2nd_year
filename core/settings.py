@@ -76,11 +76,22 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'quiz_db',
+        'USER': 'andreyberdnikov', 
+        'PASSWORD': 'Passwordforpostgres111',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
+AUTH_USER_MODEL = 'auth.User'  # Стандартная модель пользователя
+
+
+# Настройки аутентификации
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'question-list'
+LOGOUT_REDIRECT_URL = 'question-list'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -117,6 +128,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "questions/static",  # Путь к статике вашего приложения
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

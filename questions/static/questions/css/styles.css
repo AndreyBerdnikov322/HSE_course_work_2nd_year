@@ -1,0 +1,82 @@
+/* questions/static/questions/css/styles.css */
+
+/* Стили для виджета изображения */
+.custom-image-input .current-image {
+    margin-bottom: 1rem;
+}
+
+.custom-image-input .img-thumbnail {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    background-color: #fff;
+}
+
+.custom-image-input .form-check {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.custom-image-input .form-check-input {
+    margin-right: 0.5rem;
+}
+
+/* Дополнительные стили для формы */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-control-file {
+    display: block;
+    width: 100%;
+}
+/* Основные стили */
+body {
+    padding-top: 20px;
+}
+
+/* Карточки вопросов */
+.question-card {
+    transition: transform 0.2s;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.question-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Кнопки */
+.btn-action {
+    min-width: 100px;
+    margin: 0 5px;
+}
+
+/* Формы */
+.auth-form {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Изображения */
+.question-image {
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .navbar-nav {
+        flex-direction: row;
+    }
+}

@@ -1,13 +1,21 @@
 {% extends "questions/base.html" %}
 
 {% block content %}
-    <h1>Вопросы</h1>
-    {% for question in questions %}
-        <div class="question">
-            <p>{{ question.text }}</p>
-            {% if question.image %}
-                <img src="{{ question.image.url }}" alt="Изображение">
-            {% endif %}
+<h1>Вопросы</h1>
+<a href="{% url 'add-question' %}" class="btn btn-success mb-3">Добавить вопрос</a>
+
+{% for question in questions %}
+<div class="card mb-3">
+    <div class="card-body">
+        <p>{{ question.text }}</p>
+        {% if question.image %}
+        <img src="{{ question.image.url }}" class="img-fluid" style="max-height: 200px;">
+        {% endif %}
+        <div class="mt-2">
+            <a href="{% url 'edit-question' question.pk %}" class="btn btn-sm btn-warning">Редактировать</a>
+            <a href="{% url 'delete-question' question.pk %}" class="btn btn-sm btn-danger">Удалить</a>
         </div>
-    {% endfor %}
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
