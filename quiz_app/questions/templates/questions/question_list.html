@@ -1,24 +1,29 @@
 {% extends "questions/base.html" %}
 
 {% block content %}
-    <div class="card">
-        <h2>Questions List</h2>
-        <a href="{% url 'question_create' %}" class="btn">Add New Question</a>
-        
-        <div style="margin-top: 20px;">
-            {% for question in questions %}
-                <div class="card" style="margin-bottom: 15px;">
-                    <h3>{{ question.text|truncatechars:100 }}</h3>
-                    <p>Type: {{ question.question_type }}</p>
-                    <div style="display: flex; gap: 10px;">
-                        <a href="{% url 'question_detail' question.pk %}" class="btn">View</a>
-                        <a href="{% url 'question_update' question.pk %}" class="btn">Edit</a>
-                        <a href="{% url 'question_delete' question.pk %}" class="btn btn-danger">Delete</a>
-                    </div>
+<div class="card">
+    <h2>Список вопросов</h2>
+    <a href="{% url 'question_create' %}" class="btn">Добавить новый вопрос</a>
+    
+    <div style="margin-top: 20px;">
+        {% for question in questions %}
+            <div class="card" style="margin-bottom: 15px;" id="question-{{ question.pk }}">
+                <h3>{{ question.text|truncatechars:100 }}</h3>
+                <p>Тип: {{ question.question_type }}</p>
+                <div style="display: flex; gap: 10px;">
+                    <a href="{% url 'question_detail' question.pk %}" class="btn">Посмотреть</a>
+                    <a href="{% url 'question_update' question.pk %}" class="btn">Изменить</a>
+                    <button hx-delete="{% url 'question_delete' question.pk %}"
+                            hx-target="#question-{{ question.pk }}"
+                            hx-confirm="Вы уверены, что хотите удалить этот вопрос?"
+                            class="btn btn-danger">
+                        Удалить
+                    </button>
                 </div>
-            {% empty %}
-                <p>No questions yet.</p>
-            {% endfor %}
-        </div>
+            </div>
+        {% empty %}
+            <p>Ещё нет добавленных вопросов.</p>
+        {% endfor %}
     </div>
+</div>
 {% endblock %}

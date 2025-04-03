@@ -2,42 +2,22 @@
 
 {% block content %}
     <div class="card">
-        <h2>Question Details</h2>
+        <h2>Детали вопроса:</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <a href="{% url 'question_update' question.pk %}" class="btn">Edit Question</a>
-            <a href="{% url 'question_delete' question.pk %}" class="btn btn-danger">Delete Question</a>
-            <a href="{% url 'question_list' %}" class="btn btn-secondary">Back to List</a>
+            <a href="{% url 'question_update' question.pk %}" class="btn">Редактировать</a>
+            <a href="{% url 'question_delete' question.pk %}" class="btn btn-danger">Удалить</a>
+            <a href="{% url 'question_list' %}" class="btn btn-secondary">Назад к списку</a>
         </div>
         
         <div class="card">
             <h3>{{ question.text }}</h3>
-            <p><strong>Type:</strong> {{ question.question_type }}</p>
-            <p><strong>Created:</strong> {{ question.created_at|date:"Y-m-d H:i" }}</p>
-            <p><strong>Updated:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Тип вопроса:</strong> {{ question.question_type }}</p>
+            <p><strong>Создан:</strong> {{ question.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Обновлён:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
         </div>
         
         <div class="card" style="margin-top: 20px;">
-            <h3>Images</h3>
-            
-            <!-- Улучшенная форма добавления изображения -->
-            <div style="margin-bottom: 20px;">
-                <form method="post" 
-                      enctype="multipart/form-data" 
-                      hx-post="{% url 'add_image' question.pk %}" 
-                      hx-target="#imageList"
-                      hx-encoding="multipart/form-data">
-                    {% csrf_token %}
-                    <div style="margin-bottom: 10px;">
-                        <label for="image">Select Image:</label>
-                        <input type="file" name="image" id="image" required>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <label for="caption">Caption:</label>
-                        <input type="text" name="caption" id="caption" placeholder="Optional caption">
-                    </div>
-                    <button type="submit" class="btn">Upload Image</button>
-                </form>
-            </div>
+            <h3>Изображения</h3>
             
             <!-- Список изображений с возможностью удаления -->
             <div id="imageList">
