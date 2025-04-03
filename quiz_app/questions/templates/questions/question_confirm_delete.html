@@ -1,0 +1,13 @@
+{% extends "questions/base.html" %}
+
+{% block content %}
+    <div class="card">
+        <h2>Delete Question</h2>
+        <p>Are you sure you want to delete "{{ question.text|truncatechars:50 }}"?</p>
+        <form hx-post="{% url 'question_delete' question.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a href="{% url 'question_detail' question.pk %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+{% endblock %}

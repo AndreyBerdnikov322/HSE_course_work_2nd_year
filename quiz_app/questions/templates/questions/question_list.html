@@ -1,0 +1,24 @@
+{% extends "questions/base.html" %}
+
+{% block content %}
+    <div class="card">
+        <h2>Questions List</h2>
+        <a href="{% url 'question_create' %}" class="btn">Add New Question</a>
+        
+        <div style="margin-top: 20px;">
+            {% for question in questions %}
+                <div class="card" style="margin-bottom: 15px;">
+                    <h3>{{ question.text|truncatechars:100 }}</h3>
+                    <p>Type: {{ question.question_type }}</p>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="{% url 'question_detail' question.pk %}" class="btn">View</a>
+                        <a href="{% url 'question_update' question.pk %}" class="btn">Edit</a>
+                        <a href="{% url 'question_delete' question.pk %}" class="btn btn-danger">Delete</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No questions yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,18 @@
+<div class="card">
+    <h3>Добавить изображение</h3>
+    <form hx-post="{% url 'add_image' question.pk %}" hx-encoding="multipart/form-data">
+        {% csrf_token %}
+        <div>
+            <label for="image">Изображение:</label>
+            <input type="file" name="image" id="image" required>
+        </div>
+        <div style="margin-top: 10px;">
+            <label for="caption">Caption:</label>
+            <input type="text" name="caption" id="caption">
+        </div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button type="submit" class="btn">Загрузить</button>
+            <button type="button" class="btn btn-secondary" onclick="this.closest('div').remove()">Отмена</button>
+        </div>
+    </form>
+</div>

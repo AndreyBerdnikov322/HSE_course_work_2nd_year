@@ -1,0 +1,46 @@
+{% extends "questions/base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>{% if object %}Редактировать{% else %}Создать{% endif %} вопрос</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_text">Текст вопроса:</label>
+            <textarea name="text" id="id_text" class="form-control" rows="3" required>{{ form.text.value|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_question_type">Тип вопроса:</label>
+            <select name="question_type" id="id_question_type" class="form-control" required>
+                <option value="">Выберите тип</option>
+                {% for type in form.question_type.field.queryset %}
+                    <option value="{{ type.id }}">{{ type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- HTMX-секция для изображений -->
+        <div class="image-upload-section">
+            <button type="button" 
+                    hx-get="{% url 'add_image_form' %}" 
+                    hx-target="#image-forms" 
+                    hx-swap="beforeend"
+                    class="btn">
+                + Добавить изображение
+            </button>
+            <div id="image-forms"></div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{% if object %}{% url 'question_detail' object.pk %}{% else %}{% url 'question_list' %}{% endif %}" 
+               class="btn btn-secondary">
+                Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

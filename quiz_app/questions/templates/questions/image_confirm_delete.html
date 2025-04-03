@@ -1,0 +1,9 @@
+<div class="card">
+    <h3>Удалить изображение</h3>
+    <p>Вы уверены, что хотите удалить изображение?</p>
+    <form hx-post="{% url 'delete_image' image.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Удалить</button>
+        <button type="button" class="btn btn-secondary" onclick="this.closest('div').remove()">Отмена</button>
+    </form>
+</div>

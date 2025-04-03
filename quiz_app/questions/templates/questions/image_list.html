@@ -1,0 +1,13 @@
+<div class="image-grid">
+    {% for image in images %}
+        <div class="image-card">
+            <img src="{{ image.image.url }}" alt="{{ image.caption }}">
+            {% if image.caption %}<p>{{ image.caption }}</p>{% endif %}
+            <button hx-get="{% url 'delete_image' image.pk %}" hx-target="closest .image-card" class="btn btn-danger" style="margin-top: 10px;">
+                Delete
+            </button>
+        </div>
+    {% empty %}
+        <p>No images yet.</p>
+    {% endfor %}
+</div>
