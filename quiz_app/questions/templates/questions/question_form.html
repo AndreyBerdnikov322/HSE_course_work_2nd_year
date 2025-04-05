@@ -26,36 +26,50 @@
             </div>
             
             <!-- Ответы -->
-            <h4 class="mt-4 mb-3">Варианты ответов:</h4>
-            {{ answer_formset.management_form }}
-            <div id="answers-container">
-                {% for form in answer_formset %}
-                <div class="answer-form card mb-3">
-                    <div class="card-body">
-                        {{ form.id }}
-                        <div class="form-group mb-2">
-                            <label class="form-label">Текст ответа:</label>
-                            {{ form.text }}
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Варианты ответов</h4>
+                    <button type="button" id="add-answer" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-circle"></i> Добавить ответ
+                    </button>
+                </div>
+                <div class="card-body">
+                    {{ answer_formset.management_form }}
+                    <div class="row" id="answers-container">
+                        {% for form in answer_formset %}
+                        <div class="col-md-6 mb-3 answer-form" id="answer-{{ form.instance.pk|default:'new' }}">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    {{ form.id }}
+                                    <div class="form-group mb-3 flex-grow-1">
+                                        <label class="form-label">Текст ответа:</label>
+                                        {{ form.text }}
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.is_correct }}
+                                        <label class="form-check-label">Правильный ответ</label>
+                                    </div>
+                                    <div class="mt-auto">
+                                        {% if form.instance.pk %}
+                                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer" 
+                                                hx-post="{% url 'delete_answer' form.instance.pk %}" 
+                                                hx-target="closest .answer-form" 
+                                                hx-swap="outerHTML">
+                                            <i class="bi bi-trash"></i> Удалить
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer">
+                                            <i class="bi bi-trash"></i> Удалить
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check mb-2">
-                            {{ form.is_correct }}
-                            <label class="form-check-label">Правильный ответ</label>
-                        </div>
-                        {% if form.instance.pk %}
-                        <button type="button" class="btn btn-sm btn-danger remove-answer" 
-                                hx-post="{% url 'delete_answer' form.instance.pk %}" 
-                                hx-target="closest .answer-form" 
-                                hx-swap="outerHTML">
-                            Удалить
-                        </button>
-                        {% else %}
-                        <button type="button" class="btn btn-sm btn-danger remove-answer">Удалить</button>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
             </div>
-            <button type="button" id="add-answer" class="btn btn-secondary mb-4">+ Добавить ответ</button>
             
             <!-- Блок с изображениями -->
             <div class="card mt-4">
@@ -72,15 +86,18 @@
                     <!-- Существующие изображения -->
                     <div class="existing-images">
                         <div class="row" id="images-container">
-                            <!-- В блоке с существующими изображениями -->
                             {% for image in existing_images %}
                             <div class="col-md-4 mb-3" id="image-{{ image.pk }}">
                                 <div class="card h-100">
                                     <img src="{{ image.image.url }}" class="card-img-top img-fluid" alt="{{ image.caption }}" style="max-height: 150px; object-fit: contain;">
                                     <div class="card-body d-flex flex-column">
                                         {% if image.caption %}<p class="card-text">{{ image.caption }}</p>{% endif %}
-                                        <button type="button" class="btn btn-sm btn-danger mt-auto delete-image-btn"
-                                                data-image-id="{{ image.pk }}">
+                                        <button type="button" class="btn btn-sm btn-danger delete-image-btn"
+                                                data-image-id="{{ image.pk }}"
+                                                hx-post="{% url 'delete_image' image.pk %}"
+                                                hx-target="closest .col-md-4"
+                                                hx-swap="outerHTML"
+                                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                                             <i class="bi bi-trash"></i> Удалить
                                         </button>
                                         <input type="hidden" name="delete_images" value="{{ image.pk }}" disabled>
@@ -99,21 +116,24 @@
             
             <!-- Кнопки формы -->
             <div class="d-flex justify-content-between mt-4">
-                <button type="submit" class="btn btn-primary" id="submit-btn">
+                <button type="submit" class="btn btn-primary" id="submit-btn" style="min-width: 100px; padding: 8px 16px;">
                     <span id="submit-text">Сохранить</span>
-                    <span id="submit-spinner" class="spinner-border spinner-border-sm d-none"></span>
+                    <span id="submit-spinner" class="spinner-border spinner-border-sm d-none" style="vertical-align: middle; margin-left: 5px;"></span>
                 </button>
                 
-                <script>
-                document.querySelector('form').addEventListener('submit', function() {
-                    document.getElementById('submit-text').classList.add('d-none');
-                    document.getElementById('submit-spinner').classList.remove('d-none');
-                    document.getElementById('submit-btn').disabled = true;
-                });
-                </script>
-                <a href="{% if object %}{% url 'question_detail' object.pk %}{% else %}{% url 'question_list' %}{% endif %}" 
-                   class="btn btn-outline-secondary">Отмена</a>
+                <a href="{{ next_url|default:question_list_url }}" 
+                class="btn btn-secondary" style="min-width: 100px; padding: 8px 16px;">
+                    Отмена
+                </a>
             </div>
+
+            <script>
+            document.querySelector('form').addEventListener('submit', function() {
+                document.getElementById('submit-text').classList.add('d-none');
+                document.getElementById('submit-spinner').classList.remove('d-none');
+                document.getElementById('submit-btn').disabled = true;
+            });
+            </script>
         </form>
     </div>
 </div>
@@ -127,30 +147,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('answers-container');
         
         const newForm = document.createElement('div');
-        newForm.className = 'answer-form card mb-3';
+        newForm.className = 'col-md-6 mb-3 answer-form';
+        newForm.id = `answer-new-${formCount}`;
         newForm.innerHTML = `
-            <div class="card-body">
-                <input type="hidden" name="answers-${formCount}-id" id="id_answers-${formCount}-id">
-                <div class="form-group mb-2">
-                    <label class="form-label">Текст ответа:</label>
-                    <input type="text" name="answers-${formCount}-text" class="form-control" id="id_answers-${formCount}-text">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <input type="hidden" name="answers-${formCount}-id" id="id_answers-${formCount}-id">
+                    <div class="form-group mb-3 flex-grow-1">
+                        <label class="form-label">Текст ответа:</label>
+                        <input type="text" name="answers-${formCount}-text" class="form-control" id="id_answers-${formCount}-text" required>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input type="checkbox" name="answers-${formCount}-is_correct" class="form-check-input" id="id_answers-${formCount}-is_correct">
+                        <label class="form-check-label">Правильный ответ</label>
+                    </div>
+                    <div class="mt-auto">
+                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
                 </div>
-                <div class="form-check mb-2">
-                    <input type="checkbox" name="answers-${formCount}-is_correct" id="id_answers-${formCount}-is_correct">
-                    <label class="form-check-label">Правильный ответ</label>
-                </div>
-                <button type="button" class="btn btn-sm btn-danger remove-answer">Удалить</button>
             </div>
         `;
         
         container.appendChild(newForm);
         document.getElementById('id_answers-TOTAL_FORMS').value = formCount + 1;
+        
+        // Анимация появления
+        newForm.style.opacity = '0';
+        setTimeout(() => {
+            newForm.style.transition = 'opacity 0.3s ease';
+            newForm.style.opacity = '1';
+        }, 10);
     });
 
     // Удаление ответов
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-answer') && !e.target.hasAttribute('hx-post')) {
-            e.target.closest('.answer-form').remove();
+            const answerForm = e.target.closest('.answer-form');
+            answerForm.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            answerForm.style.opacity = '0';
+            answerForm.style.transform = 'translateX(100px)';
+            setTimeout(() => {
+                answerForm.remove();
+            }, 300);
         }
     });
 
@@ -211,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
 
     // Обработка удаления существующих изображений
     document.addEventListener('click', function(e) {

@@ -12,7 +12,7 @@
                 <p>Тип: {{ question.question_type }}</p>
                 <div style="display: flex; gap: 10px;">
                     <a href="{% url 'question_detail' question.pk %}" class="btn">Посмотреть</a>
-                    <a href="{% url 'question_update' question.pk %}" class="btn">Изменить</a>
+                    <a href="{% url 'question_update' question.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Редактировать</a>
                     <button hx-delete="{% url 'question_delete' question.pk %}"
                             hx-target="#question-{{ question.pk }}"
                             hx-confirm="Вы уверены, что хотите удалить этот вопрос?"

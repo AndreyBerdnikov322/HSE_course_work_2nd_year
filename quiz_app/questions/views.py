@@ -36,8 +36,9 @@ class QuestionCreateView(CreateView):
         else:
             context['answer_formset'] = AnswerFormSet()
             
-        # Добавляем пустой список изображений для создания
         context['existing_images'] = []
+        context['next_url'] = self.request.GET.get('next', '')
+        context['question_list_url'] = reverse('question_list')  # Добавляем URL списка вопросов
         return context
     
     def form_valid(self, form):
@@ -49,18 +50,20 @@ class QuestionCreateView(CreateView):
             answer_formset.instance = self.object
             answer_formset.save()
             
-            # Обработка изображений
             images = self.request.FILES.getlist('new_images')
             captions = self.request.POST.getlist('new_captions')
             
             for image, caption in zip(images, captions):
-                if image:  # Проверяем, что файл был загружен
+                if image:
                     Image.objects.create(
                         question=self.object,
                         image=image,
                         caption=caption
                     )
             
+            next_url = self.request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('question_detail', pk=self.object.pk)
         else:
             return self.render_to_response(self.get_context_data(form=form))
@@ -79,44 +82,16 @@ class QuestionUpdateView(UpdateView):
         else:
             context['answer_formset'] = AnswerFormSet(instance=self.object)
             
-        # Добавляем существующие изображения
         context['existing_images'] = self.object.images.all()
+        context['next_url'] = self.request.GET.get('next', '')
+        context['question_list_url'] = reverse('question_list')  # Добавляем URL списка вопросов
         return context
     
-    def form_valid(self, form):
-        context = self.get_context_data()
-        answer_formset = context['answer_formset']
-        
-        if answer_formset.is_valid():
-            self.object = form.save()
-            answer_formset.instance = self.object
-            answer_formset.save()
-            
-            # Обработка новых изображений
-            images = self.request.FILES.getlist('new_images')
-            captions = self.request.POST.getlist('new_captions')
-            
-            for image, caption in zip(images, captions):
-                if image:
-                    Image.objects.create(
-                        question=self.object,
-                        image=image,
-                        caption=caption
-                    )
-            
-            # Удаление изображений, помеченных на удаление
-            deleted_images = self.request.POST.getlist('delete_images')
-            for image_id in deleted_images:
-                try:
-                    image = Image.objects.get(pk=image_id, question=self.object)
-                    image.delete()
-                except Image.DoesNotExist:
-                    pass
-            
-            messages.success(self.request, "Вопрос успешно обновлен!")
-            return redirect('question_detail', pk=self.object.pk)
-        else:
-            return self.render_to_response(self.get_context_data(form=form))
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return next_url
+        return reverse('question_detail', kwargs={'pk': self.object.pk})
 
 def delete_answer(request, pk):
     answer = get_object_or_404(Answer, pk=pk)

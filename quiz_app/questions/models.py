@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 
@@ -17,6 +18,8 @@ class Question(models.Model):
 
     def __str__(self):
         return self.text[:50]
+    def get_absolute_url(self):
+        return reverse('question_detail', kwargs={'pk': self.pk})
 
 class Image(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='images')
