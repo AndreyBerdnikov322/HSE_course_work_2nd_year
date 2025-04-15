@@ -1,29 +1,155 @@
 {% extends "questions/base.html" %}
 
 {% block content %}
-<div class="card">
-    <h2>Список вопросов</h2>
-    <a href="{% url 'question_create' %}" class="btn">Добавить новый вопрос</a>
-    
-    <div style="margin-top: 20px;">
-        {% for question in questions %}
-            <div class="card" style="margin-bottom: 15px;" id="question-{{ question.pk }}">
-                <h3>{{ question.text|truncatechars:100 }}</h3>
-                <p>Тип: {{ question.question_type }}</p>
-                <div style="display: flex; gap: 10px;">
-                    <a href="{% url 'question_detail' question.pk %}" class="btn">Посмотреть</a>
-                    <a href="{% url 'question_update' question.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Редактировать</a>
-                    <button hx-delete="{% url 'question_delete' question.pk %}"
-                            hx-target="#question-{{ question.pk }}"
-                            hx-confirm="Вы уверены, что хотите удалить этот вопрос?"
-                            class="btn btn-danger">
-                        Удалить
-                    </button>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="bi bi-list-check me-2"></i>
+                    Список вопросов
+                </h2>
+                <a href="{% url 'question_create' %}" class="btn btn-light">
+                    <i class="bi bi-plus-circle me-1"></i> Добавить вопрос
+                </a>
             </div>
-        {% empty %}
-            <p>Ещё нет добавленных вопросов.</p>
-        {% endfor %}
+            
+            <div class="card-body">
+                {% if questions %}
+                <div class="list-group list-group-flush">
+                    {% for question in questions %}
+                    <div class="list-group-item py-3" id="question-{{ question.pk }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="me-3 flex-grow-1">
+                                <h5 class="mb-1">{{ question.text|truncatechars:100 }}</h5>
+                                <p class="mb-1 text-muted">
+                                    <i class="bi bi-tag me-1"></i>
+                                    Тип: {{ question.question_type }}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Создан: {{ question.created_at|date:"d.m.Y H:i" }}
+                                </small>
+                            </div>
+                            
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'question_detail' question.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'question_update' question.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger delete-question" 
+                                        data-question-id="{{ question.pk }}"
+                                        data-confirm="Вы уверены, что хотите удалить этот вопрос?">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-question-circle display-5 text-muted mb-3"></i>
+                    <h4 class="text-muted">Нет добавленных вопросов</h4>
+                    <p class="text-muted">Начните с создания нового вопроса</p>
+                    <a href="{% url 'question_create' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-circle me-1"></i> Создать вопрос
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="Навигация по страницам">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Предыдущая">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Следующая">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
+
+<style>
+    .list-group-item {
+        transition: all 0.3s ease;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .list-group-item:first-child {
+        border-top: none;
+    }
+    
+    .list-group-item:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem !important;
+        margin-left: 0.25rem;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .page-link {
+        color: #0d6efd;
+    }
+</style>
+<script>
+    // Удаление вопроса
+    document.querySelectorAll('.delete-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm(this.dataset.confirm)) {
+                const questionId = this.dataset.questionId;
+                fetch(`/questions/${questionId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`question-${questionId}`).remove();
+                    }
+                });
+            }
+        });
+    });
+</script>
 {% endblock %}

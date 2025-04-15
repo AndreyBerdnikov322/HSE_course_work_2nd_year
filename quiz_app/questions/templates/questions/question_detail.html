@@ -1,113 +1,163 @@
 {% extends "questions/base.html" %}
 
 {% block content %}
-    <div class="card">
-        <h2 class="card-header">Детали вопроса</h2>
-        <div class="card-body">
-            <div class="d-flex gap-2 mb-4">
-                <a href="{% url 'question_update' question.pk %}?next={{ request.path }}" class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> Редактировать
-                </a>
-                <a href="{% url 'question_delete' question.pk %}" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> Удалить
-                </a>
-                <a href="{% url 'question_list' %}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Назад к списку
-                </a>
-            </div>
-            
-            <!-- Основная информация о вопросе -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3 class="mb-0">Основная информация</h3>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h5 class="card-title">{{ question.text }}</h5>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h3 class="card-subtitle mb-2 text-muted">Тип вопроса: </h3>
-                                    <p class="card-text">{{ question.question_type }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 class="card-subtitle mb-2 text-muted">Даты:</h3>
-                                    <p class="card-text"><strong>Создан:</strong> {{ question.created_at|date:"Y-m-d H:i" }}</p>
-                                    <p class="card-text"><strong>Обновлён:</strong> {{ question.updated_at|date:"Y-m-d H:i" }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="bi bi-card-text me-2"></i>
+                    Детали вопроса
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'question_update' question.pk %}?next={{ request.path }}" 
+                       class="btn btn-light btn-sm">
+                        <i class="bi bi-pencil me-1"></i> Редактировать
+                    </a>
+                    <a href="{% url 'question_delete' question.pk %}" 
+                       class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-trash me-1"></i> Удалить
+                    </a>
                 </div>
             </div>
             
-            <!-- Блок с ответами -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3 class="mb-0">Варианты ответов</h3>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        {% for answer in question.answers.all %}
-                        <div class="list-group-item {% if answer.is_correct %}list-group-item-success{% endif %}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    {{ answer.text }}
-                                    {% if answer.is_correct %}
-                                    <span class="badge bg-success ms-2">
-                                        <i class="bi bi-check-circle"></i> - Правильный
-                                    </span>
-                                    {% endif %}
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <!-- Основная информация -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Основная информация
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h4 class="card-title">{{ question.text }}</h4>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-body">
+                                            <h5 class="card-subtitle mb-3 text-primary">
+                                                <i class="bi bi-tag me-2"></i>Тип вопроса
+                                            </h5>
+                                            <p class="card-text fs-5">{{ question.question_type }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-body">
+                                            <h5 class="card-subtitle mb-3 text-primary">
+                                                <i class="bi bi-clock me-2"></i>Даты
+                                            </h5>
+                                            <p class="card-text">
+                                                <strong>Создан:</strong> {{ question.created_at|date:"d.m.Y H:i" }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Обновлён:</strong> {{ question.updated_at|date:"d.m.Y H:i" }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        {% empty %}
-                        <div class="alert alert-info mb-0">Нет добавленных ответов</div>
-                        {% endfor %}
                     </div>
-                </div>
-            </div>
-            
-            <!-- Блок с изображениями -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">Изображения</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row" id="imageList">
-                        {% for image in question.images.all %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100">
-                                <img src="{{ image.image.url }}" 
-                                     class="card-img-top img-fluid" 
-                                     alt="{{ image.caption }}"
-                                     style="max-height: 200px; object-fit: contain;">
-                                <div class="card-body d-flex flex-column">
-                                    {% if image.caption %}<p class="card-text">{{ image.caption }}</p>{% endif %}
+                    
+                    <!-- Варианты ответов -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="mb-0">
+                                <i class="bi bi-list-check me-2"></i>
+                                Варианты ответов
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            {% if question.answers.all %}
+                            <div class="list-group list-group-flush">
+                                {% for answer in question.answers.all %}
+                                <div class="list-group-item {% if answer.is_correct %}list-group-item-success{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-3">{{ forloop.counter }}.</span>
+                                            <span>{{ answer.text }}</span>
+                                        </div>
+                                        {% if answer.is_correct %}
+                                        <span class="badge bg-success rounded-pill">
+                                            <i class="bi bi-check-circle me-1"></i>Правильный
+                                        </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
+                                {% endfor %}
                             </div>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>Нет добавленных ответов
+                            </div>
+                            {% endif %}
                         </div>
-                        {% empty %}
-                        <div class="col-12">
-                            <div class="alert alert-info mb-0">Нет добавленных изображений</div>
-                        </div>
-                        {% endfor %}
                     </div>
+                    
+                    <!-- Изображения -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h3 class="mb-0">
+                                <i class="bi bi-images me-2"></i>
+                                Изображения
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            {% if question.images.all %}
+                            <div class="row g-3" id="imageList">
+                                {% for image in question.images.all %}
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="card h-100 border-primary">
+                                        <img src="{{ image.image.url }}" 
+                                             class="card-img-top p-2" 
+                                             alt="{{ image.caption }}"
+                                             style="height: 150px; object-fit: contain;">
+                                        <div class="card-body d-flex flex-column">
+                                            {% if image.caption %}
+                                            <p class="card-text">{{ image.caption }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>Нет добавленных изображений
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <a href="{% url 'question_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-1"></i> Назад к списку
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <style>
-        .list-group-item-success {
-            background-color: rgba(25, 135, 84, 0.1);
-            border-left: 4px solid #198754;
-        }
-    </style>
+<style>
+    .list-group-item-success {
+        background-color: rgba(25, 135, 84, 0.1);
+        border-left: 4px solid #198754;
+    }
+    
+    .card-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .card-text {
+        font-size: 0.95rem;
+    }
+</style>
 {% endblock %}

@@ -1,287 +1,289 @@
 {% extends "questions/base.html" %}
 
 {% block content %}
-<div class="card">
-    <h2 class="card-header">{% if object %}Редактировать{% else %}Создать{% endif %} вопрос</h2>
-    
-    <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <!-- Основные поля вопроса -->
-            <div class="form-group mb-4">
-                <label class="form-label">Текст вопроса:</label>
-                {{ form.text }}
-                {% if form.text.errors %}
-                    <div class="text-danger">{{ form.text.errors }}</div>
-                {% endif %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">
+                    <i class="bi bi-question-circle me-2"></i>
+                    {% if object %}Редактировать вопрос{% else %}Создать новый вопрос{% endif %}
+                </h2>
             </div>
             
-            <div class="form-group mb-4">
-                <label class="form-label">Тип вопроса:</label>
-                {{ form.question_type }}
-                {% if form.question_type.errors %}
-                    <div class="text-danger">{{ form.question_type.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <!-- Ответы -->
-            <div class="card mt-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Варианты ответов</h4>
-                    <button type="button" id="add-answer" class="btn btn-sm btn-success">
-                        <i class="bi bi-plus-circle"></i> Добавить ответ
-                    </button>
-                </div>
-                <div class="card-body">
-                    {{ answer_formset.management_form }}
-                    <div class="row" id="answers-container">
-                        {% for form in answer_formset %}
-                        <div class="col-md-6 mb-3 answer-form" id="answer-{{ form.instance.pk|default:'new' }}">
-                            <div class="card h-100">
-                                <div class="card-body d-flex flex-column">
-                                    {{ form.id }}
-                                    <div class="form-group mb-3 flex-grow-1">
-                                        <label class="form-label">Текст ответа:</label>
-                                        {{ form.text }}
-                                    </div>
-                                    <div class="form-check form-switch mb-3">
-                                        {{ form.is_correct }}
-                                        <label class="form-check-label">Правильный ответ</label>
-                                    </div>
-                                    <div class="mt-auto">
-                                        {% if form.instance.pk %}
-                                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer" 
-                                                hx-post="{% url 'delete_answer' form.instance.pk %}" 
-                                                hx-target="closest .answer-form" 
-                                                hx-swap="outerHTML">
-                                            <i class="bi bi-trash"></i> Удалить
-                                        </button>
-                                        {% else %}
-                                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer">
-                                            <i class="bi bi-trash"></i> Удалить
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Блок с изображениями -->
-            <div class="card mt-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Изображения</h4>
-                    <button type="button" id="add-image-btn" class="btn btn-sm btn-success">
-                        <i class="bi bi-plus-circle"></i> Добавить изображение
-                    </button>
-                </div>
-                <div class="card-body">
-                    <!-- Контейнер для новых изображений -->
-                    <div id="new-images-container" class="mb-4"></div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
                     
-                    <!-- Существующие изображения -->
-                    <div class="existing-images">
-                        <div class="row" id="images-container">
-                            {% for image in existing_images %}
-                            <div class="col-md-4 mb-3" id="image-{{ image.pk }}">
-                                <div class="card h-100">
-                                    <img src="{{ image.image.url }}" class="card-img-top img-fluid" alt="{{ image.caption }}" style="max-height: 150px; object-fit: contain;">
-                                    <div class="card-body d-flex flex-column">
-                                        {% if image.caption %}<p class="card-text">{{ image.caption }}</p>{% endif %}
-                                        <button type="button" class="btn btn-sm btn-danger delete-image-btn"
-                                                data-image-id="{{ image.pk }}"
-                                                hx-post="{% url 'delete_image' image.pk %}"
-                                                hx-target="closest .col-md-4"
-                                                hx-swap="outerHTML"
-                                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                            <i class="bi bi-trash"></i> Удалить
-                                        </button>
-                                        <input type="hidden" name="delete_images" value="{{ image.pk }}" disabled>
-                                    </div>
+                    <!-- Основные поля вопроса -->
+                    <div class="mb-4">
+                        <div class="form-floating mb-3">
+                            {{ form.text }}
+                            <label for="{{ form.text.id_for_label }}">Текст вопроса</label>
+                            {% if form.text.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.text.errors }}
                                 </div>
-                            </div>
-                            {% empty %}
-                            <div class="col-12">
-                                <p class="text-muted">Нет добавленных изображений</p>
-                            </div>
-                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-floating">
+                            <select class="form-select" id="{{ form.question_type.id_for_label }}" 
+                                    name="{{ form.question_type.name }}" required>
+                                {% for value, label in form.question_type.field.choices %}
+                                    <option value="{{ value }}" {% if form.question_type.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label for="{{ form.question_type.id_for_label }}">Тип вопроса</label>
+                            {% if form.question_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.question_type.errors }}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Кнопки формы -->
-            <div class="d-flex justify-content-between mt-4">
-                <button type="submit" class="btn btn-primary" id="submit-btn" style="min-width: 100px; padding: 8px 16px;">
-                    <span id="submit-text">Сохранить</span>
-                    <span id="submit-spinner" class="spinner-border spinner-border-sm d-none" style="vertical-align: middle; margin-left: 5px;"></span>
-                </button>
-                
-                <a href="{{ next_url|default:question_list_url }}" 
-                class="btn btn-secondary" style="min-width: 100px; padding: 8px 16px;">
-                    Отмена
-                </a>
-            </div>
+                    
+                    <!-- Блок ответов -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">Варианты ответов</h3>
+                            <button type="button" id="add-answer" class="btn btn-sm btn-light">
+                                <i class="bi bi-plus-circle me-1"></i> Добавить ответ
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {{ answer_formset.management_form }}
+                            <div class="row g-3" id="answers-container">
+                                {% for form in answer_formset %}
+                                    <div class="col-md-6 answer-form" id="answer-{{ form.instance.pk|default:forloop.counter0 }}">
+                                        <div class="card h-100 border-primary">
+                                            <div class="card-body d-flex flex-column">
+                                                {{ form.id }}
+                                                <div class="form-floating mb-3">
+                                                    {{ form.text }}
+                                                    <label for="{{ form.text.id_for_label }}">Текст ответа</label>
+                                                </div>
+                                                <div class="form-check form-switch mb-3">
+                                                    {{ form.is_correct }}
+                                                    <label class="form-check-label" for="{{ form.is_correct.id_for_label }}">
+                                                        Правильный ответ
+                                                    </label>
+                                                </div>
+                                                {% if form.instance.pk %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger delete-answer mt-auto"
+                                                        data-answer-id="{{ form.instance.pk }}"
+                                                        data-confirm="Удалить этот ответ?">
+                                                    <i class="bi bi-trash me-1"></i> Удалить
+                                                </button>
+                                                <input type="hidden" name="{{ form.DELETE.html_name }}" id="{{ form.DELETE.id_for_label }}">
+                                                {% else %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-answer mt-auto">
+                                                    <i class="bi bi-trash me-1"></i> Удалить
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
 
-            <script>
-            document.querySelector('form').addEventListener('submit', function() {
-                document.getElementById('submit-text').classList.add('d-none');
-                document.getElementById('submit-spinner').classList.remove('d-none');
-                document.getElementById('submit-btn').disabled = true;
-            });
-            </script>
-        </form>
+                    <!-- Блок изображений -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">Изображения</h3>
+                            <button type="button" id="add-image-btn" class="btn btn-sm btn-light">
+                                <i class="bi bi-plus-circle me-1"></i> Добавить изображение
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="new-images-container" class="mb-4"></div>
+                            <div class="row g-3" id="images-container">
+                                {% for image in existing_images %}
+                                <div class="col-md-4 col-lg-3" id="image-{{ image.pk }}">
+                                    <div class="card h-100 border-primary">
+                                        <img src="{{ image.image.url }}" class="card-img-top p-2" 
+                                            alt="{{ image.caption }}" style="height: 150px; object-fit: contain;">
+                                        <div class="card-body d-flex flex-column">
+                                            {% if image.caption %}<p class="card-text">{{ image.caption }}</p>{% endif %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-image mt-auto"
+                                                    data-image-id="{{ image.pk }}">
+                                                <i class="bi bi-trash me-1"></i> Удалить
+                                            </button>
+                                            <input type="hidden" name="delete_images" value="{{ image.pk }}" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <p class="text-muted text-center">Нет добавленных изображений</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки формы -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'question_list' %}{% endif %}" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Назад
+                        </a>
+                        
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <span id="submit-text">
+                                <i class="bi bi-save me-1"></i> Сохранить
+                            </span>
+                            <span id="submit-spinner" class="spinner-border spinner-border-sm d-none ms-1"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- JavaScript для динамического добавления форм -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Добавление ответов
-    document.getElementById('add-answer').addEventListener('click', function() {
-        const formCount = parseInt(document.getElementById('id_answers-TOTAL_FORMS').value);
-        const container = document.getElementById('answers-container');
-        
-        const newForm = document.createElement('div');
-        newForm.className = 'col-md-6 mb-3 answer-form';
-        newForm.id = `answer-new-${formCount}`;
-        newForm.innerHTML = `
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column">
-                    <input type="hidden" name="answers-${formCount}-id" id="id_answers-${formCount}-id">
-                    <div class="form-group mb-3 flex-grow-1">
-                        <label class="form-label">Текст ответа:</label>
-                        <input type="text" name="answers-${formCount}-text" class="form-control" id="id_answers-${formCount}-text" required>
-                    </div>
-                    <div class="form-check form-switch mb-3">
-                        <input type="checkbox" name="answers-${formCount}-is_correct" class="form-check-input" id="id_answers-${formCount}-is_correct">
-                        <label class="form-check-label">Правильный ответ</label>
-                    </div>
-                    <div class="mt-auto">
-                        <button type="button" class="btn btn-sm btn-danger w-100 remove-answer">
-                            <i class="bi bi-trash"></i> Удалить
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавление новых ответов
+        document.getElementById('add-answer').addEventListener('click', function() {
+            const formCount = parseInt(document.getElementById('id_answers-TOTAL_FORMS').value);
+            const container = document.getElementById('answers-container');
+            
+            const newForm = document.createElement('div');
+            newForm.className = 'col-md-6 answer-form fade-in';
+            newForm.id = `answer-new-${formCount}`;
+            newForm.innerHTML = `
+                <div class="card h-100 border-primary">
+                    <div class="card-body d-flex flex-column">
+                        <input type="hidden" name="answers-${formCount}-id" id="id_answers-${formCount}-id">
+                        <div class="form-floating mb-3">
+                            <input type="text" name="answers-${formCount}-text" class="form-control" 
+                                   id="id_answers-${formCount}-text" placeholder="Текст ответа" required>
+                            <label for="id_answers-${formCount}-text">Текст ответа</label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input type="checkbox" name="answers-${formCount}-is_correct" 
+                                   class="form-check-input" id="id_answers-${formCount}-is_correct">
+                            <label class="form-check-label" for="id_answers-${formCount}-is_correct">
+                                Правильный ответ
+                            </label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-answer">
+                            <i class="bi bi-trash me-1"></i> Удалить
                         </button>
                     </div>
                 </div>
-            </div>
-        `;
-        
-        container.appendChild(newForm);
-        document.getElementById('id_answers-TOTAL_FORMS').value = formCount + 1;
-        
-        // Анимация появления
-        newForm.style.opacity = '0';
-        setTimeout(() => {
-            newForm.style.transition = 'opacity 0.3s ease';
-            newForm.style.opacity = '1';
-        }, 10);
-    });
-
-    // Удаление ответов
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-answer') && !e.target.hasAttribute('hx-post')) {
-            const answerForm = e.target.closest('.answer-form');
-            answerForm.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            answerForm.style.opacity = '0';
-            answerForm.style.transform = 'translateX(100px)';
-            setTimeout(() => {
-                answerForm.remove();
-            }, 300);
-        }
-    });
-
-    // Добавление изображений
-    const addImageBtn = document.getElementById('add-image-btn');
-    const newImagesContainer = document.getElementById('new-images-container');
-    let imageCounter = 0;
+            `;
+            
+            container.appendChild(newForm);
+            document.getElementById('id_answers-TOTAL_FORMS').value = formCount + 1;
+        });
     
-    addImageBtn.addEventListener('click', function() {
-        const formId = `new-image-${imageCounter}`;
-        const newForm = document.createElement('div');
-        newForm.className = 'image-form card mb-3';
-        newForm.id = formId;
-        newForm.innerHTML = `
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Новое изображение ${imageCounter + 1}</h5>
-                    <button type="button" class="btn btn-sm btn-danger remove-image-btn" 
-                            data-target="${formId}">
-                        <i class="bi bi-x"></i>
-                    </button>
+        // Добавление новых изображений
+        document.getElementById('add-image-btn').addEventListener('click', function() {
+            const container = document.getElementById('new-images-container');
+            const index = document.querySelectorAll('#new-images-container .image-form').length;
+            
+            const newForm = document.createElement('div');
+            newForm.className = 'image-form card mb-3 fade-in';
+            newForm.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Новое изображение</h5>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-new-image">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Файл изображения</label>
+                        <input type="file" name="new_images" class="form-control" required>
+                    </div>
+                    <div class="form-floating">
+                        <input type="text" name="new_captions" class="form-control" 
+                            placeholder="Подпись (необязательно)">
+                        <label>Подпись (необязательно)</label>
+                    </div>
                 </div>
-                <div class="form-group mb-2">
-                    <label class="form-label">Файл изображения:</label>
-                    <input type="file" name="new_images" class="form-control" accept="image/*" required>
-                </div>
-                <div class="form-group mb-2">
-                    <label class="form-label">Подпись:</label>
-                    <input type="text" name="new_captions" class="form-control" placeholder="Необязательная подпись">
-                </div>
-            </div>
-        `;
-        
-        newImagesContainer.appendChild(newForm);
-        imageCounter++;
-        
-        // Плавное появление
-        newForm.style.opacity = '0';
-        setTimeout(() => {
-            newForm.style.transition = 'opacity 0.3s ease';
-            newForm.style.opacity = '1';
-        }, 10);
-    });
+            `;
+            
+            container.appendChild(newForm);
+        });
 
-    // Удаление новых изображений (ещё не сохранённых)
+        // Удаление новых изображений (еще не сохраненных)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-new-image')) {
+                e.target.closest('.image-form').remove();
+            }
+        });
+        // Удаление существующих изображений
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-image')) {
+                const btn = e.target.closest('.delete-image');
+                const imageCard = btn.closest('.col-md-4');
+                const hiddenInput = imageCard.querySelector('input[name="delete_images"]');
+                
+                hiddenInput.disabled = false;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-check me-1"></i> Будет удалено';
+                imageCard.style.opacity = '0.5';
+            }
+        });
+    });
+</script>
+
+<script>
+    // Удаление существующих ответов
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-image-btn')) {
-            const targetId = e.target.closest('.remove-image-btn').dataset.target;
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-                targetElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                targetElement.style.opacity = '0';
-                targetElement.style.transform = 'translateX(100px)';
-                setTimeout(() => {
-                    targetElement.remove();
-                    imageCounter--;
-                }, 300);
+        if (e.target.closest('.delete-answer')) {
+            const btn = e.target.closest('.delete-answer');
+            if (confirm(btn.dataset.confirm)) {
+                const answerId = btn.dataset.answerId;
+                const answerForm = btn.closest('.answer-form');
+                const deleteInput = answerForm.querySelector('input[name$="-DELETE"]');
+                
+                deleteInput.value = 'on';
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-check me-1"></i> Удалено';
+                answerForm.style.opacity = '0.5';
             }
         }
-    });
-
-    // Обработка удаления существующих изображений
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.delete-image-btn')) {
-            const btn = e.target.closest('.delete-image-btn');
-            const imageId = btn.dataset.imageId;
-            const imageCard = btn.closest('.col-md-4');
-            const hiddenInput = imageCard.querySelector('input[name="delete_images"]');
-            
-            // Анимация удаления
-            imageCard.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            imageCard.style.opacity = '0';
-            imageCard.style.transform = 'scale(0.8)';
-            
-            // Активируем скрытое поле для отправки на сервер
-            hiddenInput.disabled = false;
-            
-            // Удаляем из DOM после анимации
-            setTimeout(() => {
-                imageCard.remove();
-                
-                // Если не осталось изображений, показываем сообщение
-                if (!document.querySelector('#images-container').children.length) {
-                    const emptyMsg = document.createElement('div');
-                    emptyMsg.className = 'col-12';
-                    emptyMsg.innerHTML = '<p class="text-muted">Нет добавленных изображений</p>';
-                    document.querySelector('#images-container').appendChild(emptyMsg);
-                }
-            }, 300);
+        
+        // Удаление новых ответов
+        if (e.target.closest('.remove-answer')) {
+            const answerForm = e.target.closest('.answer-form');
+            answerForm.remove();
+            const totalForms = document.getElementById('id_answers-TOTAL_FORMS');
+            totalForms.value = parseInt(totalForms.value) - 1;
         }
     });
-});
+</script>
+
+<script>
+// Анимации
+const style = document.createElement('style');
+style.textContent = `
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+    .fade-out {
+        animation: fadeOut 0.3s ease-out;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-20px); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

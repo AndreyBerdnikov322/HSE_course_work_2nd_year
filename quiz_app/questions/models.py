@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
 
 # Create your models here.
@@ -36,3 +37,11 @@ class Answer(models.Model):
 
     def __str__(self):
         return self.text[:50]
+    
+class CustomUser(AbstractUser):
+    is_researcher = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
