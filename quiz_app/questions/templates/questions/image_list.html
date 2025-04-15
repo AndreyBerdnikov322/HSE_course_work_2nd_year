@@ -4,10 +4,10 @@
             <img src="{{ image.image.url }}" alt="{{ image.caption }}">
             {% if image.caption %}<p>{{ image.caption }}</p>{% endif %}
             <button hx-get="{% url 'delete_image' image.pk %}" hx-target="closest .image-card" class="btn btn-danger" style="margin-top: 10px;">
-                Delete
+                Удалить
             </button>
         </div>
     {% empty %}
-        <p>No images yet.</p>
+        <p>Ещё нет изображений.</p>
     {% endfor %}
 </div>
