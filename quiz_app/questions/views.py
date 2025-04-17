@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from .models import Question, QuestionType, Image, Answer
-from django.http import HttpResponse
 from .forms import QuestionForm, ImageForm
 from django.forms import inlineformset_factory
 from django.views.generic import UpdateView
@@ -22,6 +21,7 @@ from django.utils.decorators import method_decorator
 from django import forms
 from django.forms import inlineformset_factory
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 # Create your views here.
 
 class QuestionListView(LoginRequiredMixin, ListView):
@@ -105,12 +105,15 @@ def register_view(request):
             user = form.save()
             login(request, user)
             return redirect('question_list')
+        else:
+            # Выводим ошибки в консоль Django для отладки
+            print("Ошибки формы:", form.errors)
     else:
         form = RegisterForm()
-    login_form = LoginForm()
+    
     return render(request, 'registration/register.html', {
         'form': form,
-        'login_form': login_form
+        'login_form': LoginForm(),
     })
 
 
@@ -194,22 +197,12 @@ class QuestionUpdateView(UpdateView):
             return super().form_valid(form)
         return self.render_to_response(self.get_context_data(form=form))
 
+
+@require_http_methods(["DELETE", "POST"])
 def question_delete(request, pk):
     question = get_object_or_404(Question, pk=pk)
-    if request.method == 'POST':
-        question.delete()
-        if request.headers.get('HX-Request'):
-            return HttpResponse(status=204)
-        messages.success(request, "Вопрос успешно удален!")
-        return redirect('question_list')
-    
-    return render(request, 'questions/question_confirm_delete.html', {'question': question})
-
-@require_POST
-def delete_question(request, pk):
-    question = get_object_or_404(Question, pk=pk)
     question.delete()
-    return JsonResponse({'success': True})
+    return HttpResponse(status=204)
 
 @require_POST
 def delete_answer(request, pk):

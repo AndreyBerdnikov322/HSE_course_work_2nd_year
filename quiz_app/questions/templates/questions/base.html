@@ -153,8 +153,22 @@
             opacity: 0.5;
             background-color: rgba(220, 53, 69, 0.1);
         }
+        
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        
+        /* Анимация удаления */
+        .fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
     </style>
-    
 </head>
 <body>
     <div class="container">
@@ -241,6 +255,75 @@
                 }
             });
         });
+        
+        // Функция подтверждения удаления
+        function confirmDelete(event, button) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const questionId = button.dataset.questionId;
+            const questionText = button.dataset.questionText || 'этот вопрос';
+            
+            // Создаем модальное окно
+            const modalHTML = `
+            <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            Вы уверены, что хотите удалить вопрос "${questionText}"?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-danger" onclick="performDelete(${questionId})">Удалить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            
+            // Добавляем модальное окно в DOM
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Показываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            modal.show();
+            
+            // Удаляем модальное окно после закрытия
+            document.getElementById('deleteConfirmModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+        
+        // Функция выполнения удаления
+        function performDelete(questionId) {
+            // Отправляем POST вместо DELETE для совместимости
+            fetch(`/questions/${questionId}/delete/`, {
+                method: 'POST',  // Изменили на POST
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Accept': 'application/json',
+                    'X-HTTP-Method-Override': 'DELETE'  // Эмулируем DELETE
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    const questionElement = document.getElementById(`question-${questionId}`);
+                    if (questionElement) {
+                        questionElement.classList.add('fade-out');
+                        setTimeout(() => questionElement.remove(), 300);
+                    }
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                    if (modal) modal.hide();
+                } else {
+                    alert('Ошибка при удалении');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     </script>
 </body>
 </html>

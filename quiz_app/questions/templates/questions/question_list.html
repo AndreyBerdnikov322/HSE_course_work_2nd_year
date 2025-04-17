@@ -41,7 +41,8 @@
                                 </a>
                                 <button class="btn btn-sm btn-outline-danger delete-question" 
                                         data-question-id="{{ question.pk }}"
-                                        data-confirm="Вы уверены, что хотите удалить этот вопрос?">
+                                        data-question-text="{{ question.text|truncatechars:30 }}"
+                                        onclick="confirmDelete(event, this)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -130,26 +131,23 @@
     }
 </style>
 <script>
-    // Удаление вопроса
-    document.querySelectorAll('.delete-question').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm(this.dataset.confirm)) {
-                const questionId = this.dataset.questionId;
-                fetch(`/questions/${questionId}/delete/`, {
-                    method: 'POST',
+   // Удаление вопроса через HTMX
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-question')) {
+            e.preventDefault();
+            const btn = e.target.closest('.delete-question');
+            const questionId = btn.dataset.questionId;
+            
+            if (confirm(btn.dataset.confirm)) {
+                htmx.ajax('POST', `/questions/${questionId}/delete/`, {
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById(`question-${questionId}`).remove();
-                    }
+                    },
+                    target: `#question-${questionId}`,
+                    swap: 'delete',
                 });
             }
-        });
+        }
     });
 </script>
 {% endblock %}
