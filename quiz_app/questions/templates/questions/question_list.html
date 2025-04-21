@@ -150,4 +150,30 @@
         }
     });
 </script>
+<script>
+    // Автоматическое отображение пустого состояния при удалении последнего вопроса
+    function performDelete(questionId) {
+        fetch(`/questions/${questionId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                const questionElement = document.getElementById(`question-${questionId}`);
+                if (questionElement) {
+                    questionElement.remove();
+                    // Проверяем, остались ли вопросы
+                    if (document.querySelectorAll('.list-group-item').length === 0) {
+                        document.querySelector('.empty-state').style.display = 'block';
+                    }
+                }
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal'));
+                if (modal) modal.hide();
+            }
+        });
+    }
+</script>
 {% endblock %}

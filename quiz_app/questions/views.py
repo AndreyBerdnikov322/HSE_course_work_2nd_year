@@ -22,6 +22,10 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 # Create your views here.
 
 class QuestionListView(LoginRequiredMixin, ListView):
@@ -30,6 +34,7 @@ class QuestionListView(LoginRequiredMixin, ListView):
     context_object_name = 'questions'
     login_url = '/login/'
 
+@login_required
 def question_detail(request, pk):
     question = get_object_or_404(Question, pk=pk)
     return render(request, 'questions/question_detail.html', {'question': question})
@@ -95,6 +100,7 @@ class CustomLoginView(LoginView):
             context['register_form'] = RegisterForm()
         return context
 
+@login_required
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('question_list')
@@ -105,11 +111,15 @@ def register_view(request):
             user = form.save()
             login(request, user)
             return redirect('question_list')
-        else:
-            # Выводим ошибки в консоль Django для отладки
-            print("Ошибки формы:", form.errors)
     else:
         form = RegisterForm()
+    
+    # Сохраняем данные формы при ошибке
+    if request.method == 'POST' and not form.is_valid():
+        form.data = form.data.copy()
+        for field in form.fields:
+            if field in request.POST:
+                form.data[field] = request.POST[field]
     
     return render(request, 'registration/register.html', {
         'form': form,
@@ -197,7 +207,7 @@ class QuestionUpdateView(UpdateView):
             return super().form_valid(form)
         return self.render_to_response(self.get_context_data(form=form))
 
-
+@login_required
 @require_http_methods(["DELETE", "POST"])
 def question_delete(request, pk):
     question = get_object_or_404(Question, pk=pk)
@@ -205,6 +215,7 @@ def question_delete(request, pk):
     return HttpResponse(status=204)
 
 @require_POST
+@login_required
 def delete_answer(request, pk):
     answer = get_object_or_404(Answer, pk=pk)
     answer.delete()
@@ -237,6 +248,7 @@ def add_image(request, question_pk):
     
     return HttpResponse(status=405)  # Method Not Allowed
 
+@login_required
 def delete_image(request, pk):
     image = get_object_or_404(Image, pk=pk)
     if request.method == 'POST':
@@ -244,15 +256,18 @@ def delete_image(request, pk):
         return HttpResponse(status=204, headers={'HX-Trigger': 'imageListChanged'})
     return render(request, 'questions/image_confirm_delete.html', {'image': image})
 
+@login_required
 def image_list(request, question_pk):
     question = get_object_or_404(Question, pk=question_pk)
     images = question.images.all()
     return render(request, 'questions/image_list.html', {'images': images, 'question': question})
 
+@login_required
 def add_image_form(request):
     """Возвращает HTML-форму для добавления изображения"""
     return render(request, 'questions/partials/image_form.html')
 
+@login_required
 def question_create(request):
     if request.method == 'POST':
         form = QuestionForm(request.POST, request.FILES)
@@ -281,3 +296,33 @@ def question_create(request):
         'question_types': question_types
     })
 
+@login_required
+def settings_view(request):
+    return render(request, 'questions/settings.html')
+
+@login_required
+@require_POST
+def delete_account(request):
+    user = request.user
+    if user.check_password(request.POST.get('password', '')):
+        user.delete()
+        logout(request)
+        messages.success(request, "Ваш аккаунт был успешно удален.")
+        return redirect('question_list')
+    else:
+        messages.error(request, "Неверный пароль. Аккаунт не удален.")
+        return redirect('settings')
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Ваш пароль был успешно изменен!')
+            return redirect('settings')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
+    return redirect('settings')

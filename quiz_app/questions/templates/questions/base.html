@@ -168,7 +168,99 @@
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-20px); }
         }
+        .empty-state {
+            display: none; /* Скрыто по умолчанию */
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
     </style>
+    <style>
+        /* Основные стили для светлой темы */
+        body {
+            background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important;
+            transition: background 0.3s ease;
+        }
+    
+        /* Стили для тёмной темы */
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #212529;
+            --bs-body-color: #f8f9fa;
+            --bs-card-bg: #2c3034;
+            --bs-light: #343a40;
+            --bs-dark: #f8f9fa;
+        }
+    
+        [data-bs-theme="dark"] body {
+            background-color: #121416;
+        }
+    
+        [data-bs-theme="dark"] .bg-gradient-primary {
+            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%) !important;
+        }
+    
+        [data-bs-theme="dark"] .card {
+            background-color: var(--bs-card-bg);
+            border-color: #495057;
+        }
+    
+        [data-bs-theme="dark"] .navbar-dark {
+            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%) !important;
+        }
+    </style>
+    <style>
+        /* Предзагрузка темных стилей */
+        :root {
+            --dark-bg: #121416;
+            --dark-gradient: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+        }
+        
+        body {
+            transition: background-color 0.3s ease;
+        }
+        
+        .bg-gradient-primary {
+            transition: background 0.3s ease;
+        }
+    </style>
+    <script>
+        // Применяем тему ДО загрузки страницы
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const isDark = savedTheme === 'dark' || 
+                          (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDark) {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+                document.body.style.backgroundColor = '#121416';
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -188,7 +280,7 @@
                             {{ user.username }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Настройки</a></li>
+                            <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i>Настройки</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{% url 'logout' %}" method="post" class="px-3 py-2">
@@ -206,11 +298,14 @@
         </nav>
         
         {% if messages %}
-        <ul class="messages">
+        <div class="container mt-3">
             {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
             {% endfor %}
-        </ul>
+        </div>
         {% endif %}
         
         {% if not user.is_authenticated %}
@@ -324,6 +419,60 @@
             })
             .catch(error => console.error('Error:', error));
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Функция теперь только для взаимодействий пользователя
+            function handleThemeChange(theme) {
+                const isDark = theme === 'dark' || 
+                              (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                
+                if (isDark) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                    document.body.style.backgroundColor = '#121416';
+                    updateGradients('dark');
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                    document.body.style.backgroundColor = '#f8f9fa';
+                    updateGradients('light');
+                }
+                
+                localStorage.setItem('theme', theme);
+                setActiveThemeButton(theme);
+            }
+        
+            function updateGradients(theme) {
+                const gradient = theme === 'dark' 
+                    ? 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)' 
+                    : 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+                
+                document.querySelectorAll('.bg-gradient-primary').forEach(el => {
+                    el.style.background = gradient;
+                });
+            }
+        
+            function setActiveThemeButton(theme) {
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === theme);
+                });
+            }
+        
+            // Инициализация
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setActiveThemeButton(savedTheme);
+            
+            // Обработчики кнопок
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleThemeChange(btn.dataset.theme));
+            });
+        
+            // Системные изменения
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (localStorage.getItem('theme') === 'system') {
+                    handleThemeChange('system');
+                }
+            });
+        });
     </script>
 </body>
 </html>
