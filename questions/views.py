@@ -100,31 +100,21 @@ class CustomLoginView(LoginView):
             context['register_form'] = RegisterForm()
         return context
 
-@login_required
+
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect('question_list')
-        
+        return redirect('question_list')  # Редирект для авторизованных
+
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user)  # Автоматический вход после регистрации
             return redirect('question_list')
     else:
         form = RegisterForm()
-    
-    # Сохраняем данные формы при ошибке
-    if request.method == 'POST' and not form.is_valid():
-        form.data = form.data.copy()
-        for field in form.fields:
-            if field in request.POST:
-                form.data[field] = request.POST[field]
-    
-    return render(request, 'registration/register.html', {
-        'form': form,
-        'login_form': LoginForm(),
-    })
+
+    return render(request, 'registration/register.html', {'form': form})
 
 
 class CustomLogoutView(LogoutView):
