@@ -20,4 +20,5 @@ urlpatterns = [
     path('settings/', settings_view, name='settings'),
     path('settings/delete-account/', delete_account, name='delete_account'),
     path('settings/change-password/', change_password, name='change_password'),
+    path('export/', views.export_questions_excel, name='export_questions_excel'),
 ]

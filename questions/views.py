@@ -26,6 +26,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+import openpyxl
+import os
+from openpyxl.drawing.image import Image as ExcelImage
+from django.conf import settings
+from openpyxl.styles import Border, Side, Alignment
 # Create your views here.
 
 class QuestionListView(LoginRequiredMixin, ListView):
@@ -198,11 +203,11 @@ class QuestionUpdateView(UpdateView):
         return self.render_to_response(self.get_context_data(form=form))
 
 @login_required
-@require_http_methods(["DELETE", "POST"])
+@require_http_methods(["POST"])
 def question_delete(request, pk):
     question = get_object_or_404(Question, pk=pk)
     question.delete()
-    return HttpResponse(status=204)
+    return redirect('question_list')
 
 @require_POST
 @login_required
@@ -316,3 +321,74 @@ def change_password(request):
             for error in form.errors.values():
                 messages.error(request, error)
     return redirect('settings')
+
+@login_required
+def export_questions_excel(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Questions"
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    # Заголовки
+    base_headers = ["ID", "Текст вопроса", "Тип", "Ответы", "Правильные ответы"]
+    max_images = max([q.images.count() for q in Question.objects.all()] + [0])
+    image_headers = [f"Изображение {i+1}" for i in range(max_images)]
+    headers = base_headers + image_headers
+    ws.append(headers)
+
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.border = thin_border
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    row = 2
+
+    for question in Question.objects.all():
+        answers = question.answers.all()
+        all_answers = "; ".join([a.text for a in answers])
+        correct_answers = "; ".join([a.text for a in answers if a.is_correct])
+
+        ws.cell(row=row, column=1, value=question.id).border = thin_border
+        ws.cell(row=row, column=2, value=question.text).border = thin_border
+        ws.cell(row=row, column=3, value=question.question_type.name if question.question_type else "").border = thin_border
+        ws.cell(row=row, column=4, value=all_answers).border = thin_border
+        ws.cell(row=row, column=5, value=correct_answers).border = thin_border
+
+        # Вставка изображений по столбцам (начиная с 6-й колонки)
+        for i, image_obj in enumerate(question.images.all()):
+            if i >= max_images:
+                break  # на случай если что-то пошло не так
+            image_path = os.path.join(settings.MEDIA_ROOT, image_obj.image.name)
+            if os.path.exists(image_path):
+                img = ExcelImage(image_path)
+                img.width = 90
+                img.height = 60
+                col_letter = openpyxl.utils.get_column_letter(6 + i)
+                cell_position = f"{col_letter}{row}"
+                ws.add_image(img, cell_position)
+
+                ws.cell(row=row, column=6 + i).border = thin_border
+                ws.row_dimensions[row].height = 50
+                ws.column_dimensions[col_letter].width = 15  # ширина под изображение
+
+        row += 1
+
+    # Автоширина для первых столбцов
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 40
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 30
+    ws.column_dimensions['E'].width = 30
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=questions.xlsx'
+    wb.save(response)
+    return response

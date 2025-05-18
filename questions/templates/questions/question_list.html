@@ -9,6 +9,9 @@
                     <i class="bi bi-list-check me-2"></i>
                     Список вопросов
                 </h2>
+                <a href="{% url 'export_questions_excel' %}" class="btn btn-success me-2">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Экспорт в Excel
+                </a>
                 <a href="{% url 'question_create' %}" class="btn btn-light">
                     <i class="bi bi-plus-circle me-1"></i> Добавить вопрос
                 </a>
